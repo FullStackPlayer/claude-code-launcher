@@ -1,0 +1,21 @@
+{
+  "default_provider": "glm-4.5",
+  "providers": {
+    "glm-4.5": {
+      "base_url": "https://open.bigmodel.cn/api/anthropic",
+      "auth_token": "GLM_API_KEY"
+    },
+    "deepseek-3.1": {
+      "base_url": "https://api.deepseek.com/anthropic",
+      "auth_token": "DEEPSEEK_API_KEY",
+      "model": "deepseek-chat",
+      "small_fast_model": "deepseek-chat"
+    },
+    "kimi-k2": {
+      "base_url": "https://api.moonshot.cn/anthropic",
+      "auth_token": "KIMI_API_KEY",
+      "model": "kimi-k2-turbo-preview",
+      "small_fast_model": "kimi-k2-turbo-preview"
+    }
+  }
+}
