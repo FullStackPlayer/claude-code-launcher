@@ -114,6 +114,11 @@ bun run build:windows  # Windows x64
 
 为了方便随时使用，你也可以将可执行文件设置为系统全局命令。
 
+windows 用户可以通过两种方式：
+
+1. 下载解压或者编译出 ccl.exe 直接双击运行即可；
+2. 在 PowerShell 中执行 .\ccl.exe 命令，当然也可以加上 --provider=xxx 参数（参见配置文件中的 provider 名称）直接以指定模型启动；
+
 TBD: 自动化安装脚本
 
 ## 支持的模型
