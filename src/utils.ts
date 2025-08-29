@@ -93,7 +93,7 @@ export function getCurrentDir(): string {
 /**
  * 读取并验证配置文件
  */
-export function loadConfig(): AppConfig {
+export function loadConfig(): AppConfig | null {
     // 获取可执行文件的真实路径
   let currentDir: string = getCurrentDir();
   
@@ -132,12 +132,12 @@ export function loadConfig(): AppConfig {
       writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2), 'utf-8');
       Logger.warning(`已创建默认配置文件: ${configPath}`);
       Logger.warning('请编辑配置文件，设置正确的 API 密钥后再重新运行程序');
-      process.exit(1);
+      return null;
     } catch (writeError) {
       Logger.error(`创建默认配置文件失败: ${writeError instanceof Error ? writeError.message : String(writeError)}`);
       Logger.error(`请手动创建配置文件 ccl.config.json，内容如下:`);
       Logger.error(JSON.stringify(defaultConfig, null, 2));
-      process.exit(1);
+      return null;
     }
   }
 

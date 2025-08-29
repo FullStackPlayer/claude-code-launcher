@@ -55,36 +55,42 @@ async function main(): Promise<void> {
     // 2. 加载和验证配置文件
     Logger.info("加载配置文件...");
     const config = loadConfig();
-    Logger.success("配置文件加载成功");
+    // 如果配置文件加载失败（null），则停止程序运行
+    if (config === null) {
+      process.stdin.resume();
+    }
+    else {
+      Logger.success("配置文件加载成功");
 
-    // 3. 解析命令行参数
-    const providerArg = parseArgs();
-    let selectedProvider: string;
+      // 3. 解析命令行参数
+      const providerArg = parseArgs();
+      let selectedProvider: string;
 
-    if (providerArg) {
-      // 检查指定的 provider 是否存在
-      if (config.providers[providerArg]) {
-        selectedProvider = providerArg;
-        Logger.info(`使用命令行指定的 provider: ${selectedProvider}`);
+      if (providerArg) {
+        // 检查指定的 provider 是否存在
+        if (config.providers[providerArg]) {
+          selectedProvider = providerArg;
+          Logger.info(`使用命令行指定的 provider: ${selectedProvider}`);
+        } else {
+          Logger.warning(`参数指定的 provider "${providerArg}" 不存在`);
+          selectedProvider = await selectProviderInteractively(config);
+        }
       } else {
-        Logger.warning(`参数指定的 provider "${providerArg}" 不存在`);
+        // 交互式选择 provider
         selectedProvider = await selectProviderInteractively(config);
       }
-    } else {
-      // 交互式选择 provider
-      selectedProvider = await selectProviderInteractively(config);
-    }
 
-    // 4. 获取选中的 provider 配置
-    const providerConfig = config.providers[selectedProvider];
-    if (!providerConfig) {
-      Logger.error(`Provider "${selectedProvider}" 配置不存在`);
-      process.exit(1);
-    }
+      // 4. 获取选中的 provider 配置
+      const providerConfig = config.providers[selectedProvider];
+      if (!providerConfig) {
+        Logger.error(`Provider "${selectedProvider}" 配置不存在`);
+        process.exit(1);
+      }
 
-    // 5. 转换为环境变量并启动 Claude Code
-    const envVars = providerToEnvVars(providerConfig);
-    await launchClaudeCode(envVars);
+      // 5. 转换为环境变量并启动 Claude Code
+      const envVars = providerToEnvVars(providerConfig);
+      await launchClaudeCode(envVars);
+    }
   } catch (error) {
     Logger.error(
       `程序执行失败: ${error instanceof Error ? error.message : String(error)}`
