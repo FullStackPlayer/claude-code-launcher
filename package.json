@@ -1,6 +1,6 @@
 {
   "name": "claude-code-launcher",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Claude Code launcher with multiple model provider support",
   "main": "src/index.ts",
   "module": "src/index.ts",
@@ -10,16 +10,15 @@
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
     "test": "bun test",
-    "build:linux": "bun build --compile --target=bun-linux-x64 --outfile dist/linux/ccl src/index.ts",
-    "build:macos:arm": "bun build --compile --target=bun-darwin-arm64 --outfile dist/macos/arm/ccl src/index.ts",
-    "build:macos:x64": "bun build --compile --target=bun-darwin-x64 --outfile dist/macos/x64/ccl src/index.ts",
+    "build:linux:x64": "bun build --compile --target=bun-linux-x64 --outfile dist/linux/x64/ccl src/index.ts",
+    "build:darwin:arm64": "bun build --compile --target=bun-darwin-arm64 --outfile dist/darwin/arm64/ccl src/index.ts",
+    "build:darwin:x64": "bun build --compile --target=bun-darwin-x64 --outfile dist/darwin/x64/ccl src/index.ts",
     "build:windows:x64": "bun build --compile --target=bun-windows-x64 --outfile dist/windows/x64/ccl.exe src/index.ts",
-    "build:all": "mkdir -p dist && bun run build:linux && bun run build:macos:arm && bun run build:macos:x64 && bun run build:windows",
-    "postinstall": "mkdir -p bin",
-    "postbuild:linux": "chmod +x dist/linux/ccl",
-    "postbuild:macos:arm": "chmod +x dist/macos/arm/ccl",
-    "postbuild:macos:x64": "chmod +x dist/macos/x64/ccl",
-    "postbuild:windows:x64": "echo 'Windows executable created'"
+    "build:all": "mkdir -p dist && bun run build:linux:x64 && bun run build:darwin:arm64 && bun run build:darwin:x64 && bun run build:windows:x64",
+    "build:release": "mkdir -p dist && bun run build:darwin:arm64 && bun run build:darwin:x64 && bun run build:windows:x64",
+    "postbuild:linux:x64": "chmod +x dist/linux/x64/ccl",
+    "postbuild:darwin:arm64": "chmod +x dist/darwin/arm64/ccl",
+    "postbuild:darwin:x64": "chmod +x dist/darwin/x64/ccl"
   },
   "keywords": [
     "claude-code",

@@ -2,7 +2,7 @@
 ccl.config.json
 
 # release 文件
-release*
+releases/v*
 
 # dependencies (bun install)
 node_modules
