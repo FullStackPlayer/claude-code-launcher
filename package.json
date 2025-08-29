@@ -13,13 +13,13 @@
     "build:linux": "bun build --compile --target=bun-linux-x64 --outfile dist/linux/ccl src/index.ts",
     "build:macos:arm": "bun build --compile --target=bun-darwin-arm64 --outfile dist/macos/arm/ccl src/index.ts",
     "build:macos:x64": "bun build --compile --target=bun-darwin-x64 --outfile dist/macos/x64/ccl src/index.ts",
-    "build:windows": "bun build --compile --target=bun-windows-x64 --outfile dist/windows/ccl.exe src/index.ts",
+    "build:windows:x64": "bun build --compile --target=bun-windows-x64 --outfile dist/windows/x64/ccl.exe src/index.ts",
     "build:all": "mkdir -p dist && bun run build:linux && bun run build:macos:arm && bun run build:macos:x64 && bun run build:windows",
     "postinstall": "mkdir -p bin",
     "postbuild:linux": "chmod +x dist/linux/ccl",
     "postbuild:macos:arm": "chmod +x dist/macos/arm/ccl",
     "postbuild:macos:x64": "chmod +x dist/macos/x64/ccl",
-    "postbuild:windows": "echo 'Windows executable created'"
+    "postbuild:windows:x64": "echo 'Windows executable created'"
   },
   "keywords": [
     "claude-code",

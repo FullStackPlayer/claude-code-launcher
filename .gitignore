@@ -1,6 +1,9 @@
 # config file
 ccl.config.json
 
+# release 文件
+release*
+
 # dependencies (bun install)
 node_modules
 

@@ -15,19 +15,19 @@ Claude Code 模型启动器 - 让您轻松切换使用不同的 AI 模型作为 
 
 然而，现在环境正在起变化，进入2025年下半年，国产开源编程大模型先后爆发，智谱GLM-4.5、Kimi K2、DeepSeek V3.1、通义千问 Qwen3-Coder，这几个优秀代表，已经可以挑战业界公认的最佳编程模型 Claude 系列，虽然暂时还没有完成超越，但是成为平替已经毫无问题。
 
-更重要的是，截至目前[2025.08]，除了 Qwen3-Coder 模型，前三家都直接提供了 Anthropic 兼容 api 接口（如果还有更多家这样做的请让我知道），这也就意味着这几家供应商官方下场支持自家模型成为 Claude Code 的模型，实测结果也非常优秀，且价格便宜。
+更重要的是，截至目前[2025.08]，除了 Qwen3-Coder 模型，前三家都直接提供了 Anthropic 兼容 api 接口（如果还有更多家这样做的请让我知道），这也就意味着这几家供应商官方下场支持自家模型成为 Claude Code 的后端模型，实测结果也非常优秀，且价格便宜。
 
-在上述背景下，我选择直接给 Claude Code 接入这几家的官方 api 使用，付费尽管微薄，却也是对这些优秀开源企业的认可和支持。并且从逻辑上来讲，官方出手对 Claude Code 进行适配，效果应该会好于 claude-code-router 先逆向再适配的方式，还可以获得随时的BUG修复和更新。
+在上述背景下，我选择直接给 Claude Code 接入这几家的官方 api 使用，付费尽管微薄，却也是对这些优秀开源企业的认可和支持。并且从逻辑上来讲，官方出手对 Claude Code 进行适配，效果应该会好于 claude-code-router 逆向再适配的方式，还可以获得官方同步的BUG修复和更新。
 
-于是我又开始面临另一个烦恼，有时候你需要同时启动几个不同后端模型的 Claude Code 进程，或者尝试切换进程来解决棘手的问题，说难不难，用命令行设定环境变量而已，但也真的繁琐，不丝滑，作为一个懒人，很难接受这种类似梗阻的体验。
+于是我又开始面临另一个烦恼，有时候你需要同时启动几个不同后端模型的 Claude Code 进程，或者尝试切换使用不同模型的进程来解决棘手的问题，说难不难，用命令行设定环境变量而已，但也真的繁琐，不丝滑，作为一个懒人，很难接受这种类似梗阻的体验。
 
 于是就有了这个项目，下面统一简称 ccl。
 
 ## 功能特点
 
-- 🚀 支持多个国内优秀的 AI 模型（目前是智谱 GLM-4.5、DeepSeek V3.1、Kimi K2）
-- 🎯 命令行参数快速直达模型
+- 🚀 支持多个国内优秀的 AI 模型（目前是智谱 GLM 4.5、DeepSeek V3.1、Kimi K2）
 - 🖥️ 美观的交互式 TUI 模型选择界面
+- 🎯 命令行参数快速直达
 - ⚙️ 灵活的配置文件管理
 - 🔄 跨平台支持（Windows, macOS, Linux）
 - 📦 单文件可执行程序
@@ -42,11 +42,11 @@ npm install -g @anthropic-ai/claude-code
 
 **注意**：安装的包名是 `@anthropic-ai/claude-code`，但启动命令是 `claude`。
 
-如果没有成功安装 claude，ccl 会尝试为你自动安装。
+万一你还没有安装 claude 就启动了 ccl 也没事儿，它会尝试为你自动安装。
 
 ## 配置文件
 
-ccl 首次执行会在同级目录下创建一个 `ccl.config.json` 配置文件，内容如下：
+ccl 首次执行会在可执行文件同级目录（ts 脚本模式则是入口 ts 文件的同级目录）下创建一个 `ccl.config.json` 配置文件，内容如下：
 
 ```json
 {
@@ -75,7 +75,7 @@ ccl 首次执行会在同级目录下创建一个 `ccl.config.json` 配置文件
 
 ## 使用方法
 
-### 脚本模式
+### Bun 支持下的 ts 脚本模式（跨平台通用）
 
 确保你的电脑已经安装了 bun 运行时，克隆当前仓库到本地，进入目录后执行：
 
@@ -83,11 +83,13 @@ ccl 首次执行会在同级目录下创建一个 `ccl.config.json` 配置文件
 # 交互式选择 provider
 bun run start
 
-# 使用指定 provider 直接运行
+# 使用指定 provider 直接运行，无需选择
 bun run start --provider=deepseek-3.1
 ```
 
 ### 可执行文件
+
+#### 构建
 
 首先要构建可执行文件，在项目目录下执行：
 
@@ -96,13 +98,15 @@ bun run start --provider=deepseek-3.1
 bun run build:all
 
 # 构建特定平台
-bun run build:linux    # Linux x64
-bun run build:macos:arm # macOS ARM64
-bun run build:macos:x64 # macOS x64
-bun run build:windows  # Windows x64
+bun run build:linux       # Linux x64
+bun run build:macos:arm   # macOS ARM64
+bun run build:macos:x64   # macOS x64
+bun run build:windows:x64 # Windows x64
 ```
 
-然后直接执行构建的可执行文件即可：
+#### 执行
+
+##### macOS & linux
 
 ```
 # 交互式选择
@@ -114,10 +118,12 @@ bun run build:windows  # Windows x64
 
 为了方便随时使用，你也可以将可执行文件设置为系统全局命令。
 
+##### windows
+
 windows 用户可以通过两种方式：
 
 1. 下载解压或者编译出 ccl.exe 直接双击运行即可；
-2. 在 PowerShell 中执行 .\ccl.exe 命令，当然也可以加上 --provider=xxx 参数（参见配置文件中的 provider 名称）直接以指定模型启动；
+2. 在 PowerShell 中执行 `.\ccl.exe` 命令，当然也可以加上 `--provider=xxx` 参数（参见配置文件中的 provider 名称）直接以指定模型启动；
 
 TBD: 自动化安装脚本
 
@@ -128,6 +134,8 @@ TBD: 自动化安装脚本
 | glm-4.5 | 智谱 GLM-4.5 | [文档](https://docs.bigmodel.cn/cn/guide/develop/claude) |
 | deepseek-3.1 | DeepSeek V3.1 | [文档](https://api-docs.deepseek.com/zh-cn/guides/anthropic_api) |
 | kimi-k2 | Kimi K2 | [文档](https://platform.moonshot.cn/docs/guide/agent-support) |
+
+如有同学发现新的国产模型也官方支持了 Anthropic API，欢迎告诉我。
 
 ## 开发
 
@@ -178,55 +186,6 @@ TBD
 
 欢迎提交 Issues 和 Pull Requests！
 
-## 跨平台兼容性
+## 鸣谢
 
-本项目支持在不同操作系统上运行，包括 Windows、macOS 和 Linux。为了实现跨平台兼容性，我们采用了以下策略：
-
-### 构建方式
-
-项目使用 Bun 构建针对不同平台的可执行文件：
-
-```
-# 构建所有平台
-bun run build:all
-
-# 构建特定平台
-bun run build:linux    # Linux x64
-bun run build:macos:arm # macOS ARM64
-bun run build:macos:x64 # macOS x64
-bun run build:windows  # Windows x64
-```
-
-构建后的可执行文件将被放置在以下目录结构中：
-```
-dist/
-├── linux/
-│   └── ccl
-├── macos/
-│   ├── arm/
-│   │   └── ccl
-│   └── x64/
-│       └── ccl
-└── windows/
-    └── ccl.exe
-```
-
-### 安装和使用
-
-无论在哪个平台，都可以通过以下方式安装和使用：
-
-```bash
-# 全局安装（推荐）
-npm install -g .
-
-# 或者使用 npx 运行
-npx claude-code-launcher
-
-# 直接运行构建后的可执行文件
-./dist/linux/ccl --provider=glm-4.5  # Linux
-./dist/macos/arm/ccl --provider=glm-4.5  # macOS ARM
-./dist/macos/x64/ccl --provider=glm-4.5  # macOS x64
-./dist/windows/ccl.exe --provider=glm-4.5  # Windows
-```
-
-启动脚本会自动检测操作系统和架构，并选择正确的可执行文件运行。
+最后感谢一下阿里家的 Qoder，这个项目是在它的帮助下开发的，非常出彩，帮我节省了很多时间。
