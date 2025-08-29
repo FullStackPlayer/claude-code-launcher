@@ -1,3 +1,26 @@
+# v0.9.2
+
+## 主要更新内容
+
+1. 新增 “使用特定模型执行单次请求” 能力
+```bash
+ccl --provider=glm-4.5 --prompt="世界上人口最少的国家是哪个?" --output=results/result.md
+```
+2. 新增命令行参数，目前全部参数如下：
+```
+- `--provider=xxx`：指定要使用的 provider
+- `--prompt=yyy`：指定要发送给 Claude Code 的提示词
+- `--output=zzz`：指定输出文件名，Claude Code 的响应将被保存到该文件中
+- `--version` 或 `-v`：显示版本号
+- `--help` 或 `-h`：显示帮助信息
+```
+3. 完善了构建脚本
+4. 配置文件相应增加了 additionalOTQP 节点，以实现用户自定义单次请求补充提示词
+
+## 使用说明
+
+参见 [README.md](https://github.com/FullStackPlayer/claude-code-launcher/blob/main/README.md) 文件
+
 # v0.9.1
 
 ## 主要更新内容
