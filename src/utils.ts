@@ -3,6 +3,9 @@ import { readFileSync, existsSync, writeFileSync, mkdirSync } from "fs";
 import { dirname, join } from "path";
 import type { AppConfig, ProviderConfig, EnvVars, OSType } from "./types.js";
 
+// 定义版本号常量，构建时会被替换为实际版本号
+const VERSION = "x.y.z"; // BUILD_VERSION_INJECTION_PLACEHOLDER
+
 /**
  * 日志输出工具
  */
@@ -131,11 +134,12 @@ export function loadConfig(): AppConfig | null {
           small_fast_model: "kimi-k2-turbo-preview",
         },
         "qwen3-coder": {
-          base_url: "https://dashscope.aliyuncs.com/api/v2/apps/claude-code-proxy",
+          base_url:
+            "https://dashscope.aliyuncs.com/api/v2/apps/claude-code-proxy",
           auth_token: "YOUR_BAILIAN_API_KEY",
         },
       },
-      additionalOTQP: ``
+      additionalOTQP: ``,
     };
 
     try {
@@ -214,11 +218,11 @@ function validateConfig(config: AppConfig): void {
  * 解析命令行参数
  */
 export function parseArgs(): Record<string, string> {
-  const args = process.argv.slice(2);  
+  const args = process.argv.slice(2);
   const result: Record<string, string> = {};
 
   // 检查是否有 --tui-selector 参数
-  const selectorFlag = args.find((arg) => (arg === "--tui-selector"));
+  const selectorFlag = args.find((arg) => arg === "--tui-selector");
   // 一旦有这个参数立刻返回
   if (selectorFlag) {
     result.tuiSelector = "true";
@@ -227,24 +231,9 @@ export function parseArgs(): Record<string, string> {
 
   // 检查是否有 --version 或 -v 参数
   if (args.includes("--version") || args.includes("-v")) {
-    try {
-      // 尝试从当前目录或上级目录获取 package.json
-      let packageJsonPath = join(getCurrentDir(), "package.json");
-      if (!existsSync(packageJsonPath)) {
-        packageJsonPath = join(getCurrentDir(), "..", "package.json");
-      }
-      if (!existsSync(packageJsonPath)) {
-        packageJsonPath = join(import.meta.dir, "..", "package.json");
-      }
-      
-      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-      console.log(packageJson.version || "unknown");
-    } catch (error) {
-      console.log("unknown");
-    }
+    console.log(VERSION);
     process.exit(0);
   }
-  
   // 检查是否有 --help 或 -h 参数
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
@@ -259,29 +248,31 @@ export function parseArgs(): Record<string, string> {
     `);
     process.exit(0);
   }
-  
+
   const providerArg = args.find((arg) => arg.startsWith("--provider="));
   const promptArg = args.find((arg) => arg.startsWith("--prompt="));
   const outputArg = args.find((arg) => arg.startsWith("--output="));
-  
+
   // 如果有 --prompt 或 --output 参数但没有 --provider 参数，则报错并终止程序
   if ((promptArg || outputArg) && !providerArg) {
-    Logger.error("使用 --prompt 或 --output 参数时必须同时指定 --provider 参数");
+    Logger.error(
+      "使用 --prompt 或 --output 参数时必须同时指定 --provider 参数"
+    );
     process.exit(1);
   }
-  
+
   // 如果有 --output 参数但没有 --prompt 参数，则报错并终止程序
   if (outputArg && !promptArg) {
     Logger.error("使用 --output 参数时必须同时指定 --prompt 参数");
     process.exit(1);
   }
-  
+
   // 如果有 --prompt 参数但没有 --output 参数，则报错并终止程序
   if (promptArg && !outputArg) {
     Logger.error("使用 --prompt 参数时必须同时指定 --output 参数");
     process.exit(1);
   }
-  
+
   // 解析 provider 参数
   if (providerArg) {
     const provider = providerArg.split("=")[1];
@@ -289,7 +280,7 @@ export function parseArgs(): Record<string, string> {
       result.provider = provider;
     }
   }
-  
+
   // 解析 prompt 参数
   if (promptArg) {
     const prompt = promptArg.split("=")[1];
@@ -297,7 +288,7 @@ export function parseArgs(): Record<string, string> {
       result.prompt = prompt;
     }
   }
-  
+
   // 解析 output 参数
   if (outputArg) {
     const output = outputArg.split("=")[1];
@@ -305,7 +296,7 @@ export function parseArgs(): Record<string, string> {
       result.output = output;
     }
   }
-  
+
   return result;
 }
 
@@ -342,7 +333,12 @@ export function providerToEnvVars(provider: ProviderConfig): EnvVars {
 /**
  * 设置环境变量并启动 Claude Code
  */
-export async function launchClaudeCode(envVars: EnvVars, prompt?: string, output?: string, additionalOTQP?: string): Promise<void> {
+export async function launchClaudeCode(
+  envVars: EnvVars,
+  prompt?: string,
+  output?: string,
+  additionalOTQP?: string
+): Promise<void> {
   Logger.info("正在启动 Claude Code...");
 
   const env = { ...process.env, ...envVars };
@@ -351,75 +347,100 @@ export async function launchClaudeCode(envVars: EnvVars, prompt?: string, output
     // 使用 Bun.spawn 提供更好的交互式支持
     // 注意 windows 下的启动命令
     const claudeCmd = isWindows() ? "claude.cmd" : "claude";
-    
+
     // 构建命令参数
     const cmdArgs: string[] = [claudeCmd];
-    
+
     // 如果有 prompt 参数，则添加 -p 参数
-    if (prompt && prompt.trim() !== '') {
+    if (prompt && prompt.trim() !== "") {
       let prePrompt = `注意！此次会话中，你必须将所有内容都直接返回，代码使用代码的代码块包裹，永远不要将任何内容写入任何文件！如果你生成的内容中用到了代码 层级标题，请从第二级开始！`;
-      
+
       // 如果有 additionalOTQP，则追加到 prePrompt 后面
-      if (additionalOTQP && additionalOTQP.trim() !== '') {
+      if (additionalOTQP && additionalOTQP.trim() !== "") {
         prePrompt += `${additionalOTQP.trim()}`;
       }
-      
-      cmdArgs.push('-p', `${prePrompt} ==> 我的问题如下: ${prompt.trim()}`);
+
+      cmdArgs.push("-p", `${prePrompt} ==> 我的问题如下: ${prompt.trim()}`);
     }
-    
+
     // console.log(cmdArgs);
 
     // 根据是否指定了输出文件来决定 stdout 的处理方式
-    const stdoutOption = output && output.trim() !== '' ? "pipe" : "inherit";
-    
+    const stdoutOption = output && output.trim() !== "" ? "pipe" : "inherit";
+
     const proc = Bun.spawn(cmdArgs, {
       env,
       stdin: "inherit",
       stdout: stdoutOption,
-      stderr: stdoutOption
+      stderr: stdoutOption,
     });
 
     Logger.success("Claude Code 启动成功");
 
     // 如果指定了输出文件，则将 stdout 写入文件
-    if (output && output.trim() !== '') {
+    if (output && output.trim() !== "") {
       // 解析输出路径
       const outputPath = output.trim();
-      
+
       // 生成时间戳 (YYMMDDhhmmss格式)
       const now = new Date();
-      const timestamp = `${(now.getFullYear() % 100).toString().padStart(2, '0')}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-      
+      const timestamp = `${(now.getFullYear() % 100)
+        .toString()
+        .padStart(2, "0")}${(now.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}${now
+        .getHours()
+        .toString()
+        .padStart(2, "0")}${now.getMinutes().toString().padStart(2, "0")}${now
+        .getSeconds()
+        .toString()
+        .padStart(2, "0")}`;
+
       let finalOutputPath: string;
-      
+
       // 检查是否包含目录路径
-      if (outputPath.includes('/') || outputPath.includes('\\')) {
+      if (outputPath.includes("/") || outputPath.includes("\\")) {
         // 处理带目录的路径（绝对路径或相对路径）
         const dir = dirname(outputPath);
-        
+
         // 检查目录是否存在，不存在则创建
         if (!existsSync(dir)) {
           try {
             mkdirSync(dir, { recursive: true });
           } catch (mkdirError) {
-            Logger.error(`创建目录失败: ${mkdirError instanceof Error ? mkdirError.message : String(mkdirError)}`);
+            Logger.error(
+              `创建目录失败: ${
+                mkdirError instanceof Error
+                  ? mkdirError.message
+                  : String(mkdirError)
+              }`
+            );
             process.exit(1);
           }
         }
-        
+
         // 在文件名后添加时间戳
-        const fileName = outputPath.split(/[/\\]/).pop() || 'output';
-        const dirPath = outputPath.substring(0, outputPath.length - fileName.length);
-        const fileNameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
-        const fileExt = fileName.substring(fileName.lastIndexOf('.'));
+        const fileName = outputPath.split(/[/\\]/).pop() || "output";
+        const dirPath = outputPath.substring(
+          0,
+          outputPath.length - fileName.length
+        );
+        const fileNameWithoutExt = fileName.substring(
+          0,
+          fileName.lastIndexOf(".")
+        );
+        const fileExt = fileName.substring(fileName.lastIndexOf("."));
         finalOutputPath = `${dirPath}${fileNameWithoutExt}_${timestamp}${fileExt}`;
       } else {
         // 仅文件名，在文件名后添加时间戳
-        const fileNameWithoutExt = outputPath.substring(0, outputPath.lastIndexOf('.'));
-        const fileExt = outputPath.substring(outputPath.lastIndexOf('.'));
+        const fileNameWithoutExt = outputPath.substring(
+          0,
+          outputPath.lastIndexOf(".")
+        );
+        const fileExt = outputPath.substring(outputPath.lastIndexOf("."));
         finalOutputPath = `${fileNameWithoutExt}_${timestamp}${fileExt}`;
       }
-      
+
       const file = Bun.file(finalOutputPath);
       const writer = file.writer();
       writer.write(`# 原始问题\n\n${prompt}\n\n# Claude Code 输出\n\n`);
@@ -432,11 +453,11 @@ export async function launchClaudeCode(envVars: EnvVars, prompt?: string, output
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
-              
+
               // 写入文件
               writer.write(value);
               await writer.flush();
-              
+
               // 同时输出到控制台（可选）
               process.stdout.write(value);
             }
@@ -446,9 +467,9 @@ export async function launchClaudeCode(envVars: EnvVars, prompt?: string, output
             await writer.end();
           }
         };
-        
+
         // 开始写入文件
-        writeToFile().catch(error => {
+        writeToFile().catch((error) => {
           Logger.error(`文件写入失败: ${error}`);
         });
       }
@@ -461,11 +482,11 @@ export async function launchClaudeCode(envVars: EnvVars, prompt?: string, output
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
-              
+
               // 写入文件
               writer.write(value);
               await writer.flush();
-              
+
               // 同时输出到控制台（可选）
               process.stderr.write(value);
             }
@@ -475,9 +496,9 @@ export async function launchClaudeCode(envVars: EnvVars, prompt?: string, output
             await writer.end();
           }
         };
-        
+
         // 开始写入文件
-        writeToFile().catch(error => {
+        writeToFile().catch((error) => {
           Logger.error(`文件写入失败: ${error}`);
         });
       }
