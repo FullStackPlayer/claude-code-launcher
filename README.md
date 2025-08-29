@@ -33,9 +33,13 @@ Claude Code 模型启动器 - 让您轻松切换使用不同的 AI 模型作为 
 
 在上述背景下，我选择直接给 Claude Code 接入这几家的官方 api 使用，付费尽管微薄，却也是对这些优秀开源企业的认可和支持。并且从逻辑上来讲，官方出手对 Claude Code 进行适配，效果应该会好于 claude-code-router 逆向再适配的方式，还可以获得官方同步的 BUG 修复和更新。
 
-于是我又开始面临另一个烦恼，有时候你需要同时启动几个不同后端模型的 Claude Code 进程，或者尝试切换使用不同模型的进程来解决棘手的问题，说难不难，用命令行设定环境变量而已，但也真的繁琐，不丝滑，作为一个懒人，很难接受这种类似梗阻的体验。
+然而我又开始面临另一个烦恼，有时候你需要同时启动几个不同后端模型的 Claude Code 进程，或者尝试切换使用不同模型的进程来解决棘手的问题，说难不难，用命令行设定环境变量而已，但也真的繁琐，不丝滑，作为一个懒人，很难接受这种类似梗阻的体验。
 
 于是就有了这个项目，下面统一简称 ccl。
+
+## 鸣谢
+
+阿里出品的 Qoder 帮我完成了这个项目的绝大多数代码，为我节省了很多时间，表现堪称经验，值得推荐给大家！
 
 ## 功能特点
 
@@ -45,6 +49,7 @@ Claude Code 模型启动器 - 让您轻松切换使用不同的 AI 模型作为 
 - ⚙️ 灵活的配置文件管理
 - 🔄 跨平台支持（Windows, macOS, Linux）
 - 📦 单文件可执行程序
+- 📚 支持快捷单次请求输出（一行命令让 Claude Code 使用指定模型解答单个问题并输出结果）
 
 ## 安装要求
 
@@ -85,11 +90,28 @@ ccl 首次执行会在可执行文件同级目录（ts 脚本模式则是入口 
       "base_url": "https://dashscope.aliyuncs.com/api/v2/apps/claude-code-proxy",
       "auth_token": "YOUR_BAILIAN_API_KEY"
     }
-  }
+  },
+  "additionalOTQP": ""
 }
 ```
 
 配置文件非常一目了然，你只需要将你要用的 provider 下 auth_token 参数替换成自己从服务商那里获取的 API Key 即可，理论上还可以自由添加新的 provider，只要它支持 Anthropic 接口协议即可。
+
+**additionalOTQP 配置**
+
+`additionalOTQP`（一次性请求提示词）是一个可选的全局配置项，允许你定义用户自定义的提示词，这些提示词会在每个一次性请求时自动追加到预设的提示词后面。这个功能仅在你需要通过命令行执行单词生成命令时可用，例如：
+
+- 指定回复语言（如"请使用中文回复"）
+- 添加特定格式要求（如"请在回复中包含'Claude Code'字样"）
+- 设置特定的行为规范（如"请不要使用 markdown 代码块格式"）
+
+示例配置：
+```json
+{
+  "additionalOTQP": "请使用中文回复，并在回复中包含'Claude Code'字样。",
+  // ... 其他配置
+}
+```
 
 ## 使用方法
 
@@ -151,6 +173,27 @@ windows 用户可以通过两种方式：
 1. 下载后解压出 `ccl.exe` 直接双击运行即可；
 2. 在 PowerShell 中执行 `.\ccl.exe` 命令，当然也可以加上 `--provider=xxx` 参数（参见配置文件中的 provider 名称）直接以指定模型启动；
 
+### 高级命令行参数
+
+ccl 支持以下命令行参数：
+
+- `--provider=xxx`：指定要使用的 provider
+- `--prompt=yyy`：指定要发送给 Claude Code 的提示词
+- `--output=zzz`：指定输出文件路径，Claude Code 的响应将被保存到该文件中
+
+当使用 `--output` 参数时，ccl 会自动为文件名添加时间戳后缀（格式为 `文件名_时间戳.扩展名`），以防止文件同名覆盖。如果输出路径包含目录部分，ccl 会自动检查目录是否存在，不存在则创建目录。
+
+示例：
+```bash
+# 使用指定 provider 并将输出保存到文件
+./ccl --provider=glm-4.5 --prompt="写一个Hello World程序" --output=hello.js
+
+# 输出到带目录的路径
+./ccl --provider=glm-4.5 --prompt="写一个Hello World程序" --output=output/hello.js
+```
+
+这将分别创建类似 `hello_250829143025.js` 和 `output/hello_250829143025.js` 的文件。
+
 TBD: 自动化安装脚本
 
 ## 支持的模型
@@ -197,24 +240,4 @@ claude-code-launcher/
 │   ├── command.test.ts   # 命令行参数测试
 │   ├── launch.test.ts    # 启动功能测试
 │   ├── tty-state.test.ts # TTY 状态测试
-│   └── utils.test.ts     # 工具函数测试
-├── dist/                 # 构建输出
-├── ccl.config.json       # 配置文件示例
-├── package.json          # 项目配置
-├── tsconfig.json         # TypeScript 配置
-├── bun.lock              # Bun 依赖锁文件
-├── .gitignore            # Git 忽略文件
-└── LICENSE               # 许可证文件
 ```
-
-## 常见问题
-
-TBD
-
-## 贡献
-
-欢迎提交 Issues 和 Pull Requests！
-
-## 鸣谢
-
-最后感谢一下阿里家的 Qoder，这个项目是在它的帮助下开发的，非常出彩，帮我节省了很多时间。

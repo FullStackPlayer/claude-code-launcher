@@ -19,6 +19,7 @@ async function main(): Promise<void> {
     // console.log('程序参数：', process.argv)
     // 检查是否是 TUI 选择器模式
     const args = process.argv.slice(2);
+    // 启动 tui 选择器
     if (args[0] === "--tui-selector") {
       try {
         // TUI 选择器模式
@@ -67,16 +68,18 @@ async function main(): Promise<void> {
       Logger.success("配置文件加载成功");
 
       // 3. 解析命令行参数
-      const providerArg = parseArgs();
-      let selectedProvider: string;
+      const argsResult = parseArgs();
+      let selectedProvider = argsResult[0] || '';
+      const prompt = argsResult[1] || '';
+      const output = argsResult[2] || '';
 
-      if (providerArg) {
+      if (selectedProvider) {
         // 检查指定的 provider 是否存在
-        if (config.providers[providerArg]) {
-          selectedProvider = providerArg;
+        if (config.providers[selectedProvider]) {
           Logger.info(`使用命令行指定的 provider: ${selectedProvider}`);
         } else {
-          Logger.warning(`参数指定的 provider "${providerArg}" 不存在`);
+          Logger.warning(`参数指定的 provider "${selectedProvider}" 不存在`);
+          // 注意：这里我们仍然需要 provider，所以即使有 prompt 也要重新选择
           selectedProvider = await selectProviderInteractively(config);
         }
       } else {
@@ -93,7 +96,9 @@ async function main(): Promise<void> {
 
       // 5. 转换为环境变量并启动 Claude Code
       const envVars = providerToEnvVars(providerConfig);
-      await launchClaudeCode(envVars);
+      // 获取 additionalOTQP 配置
+      const additionalOTQP = config.additionalOTQP || '';
+      await launchClaudeCode(envVars, prompt, output, additionalOTQP);
     }
   } catch (error) {
     Logger.error(

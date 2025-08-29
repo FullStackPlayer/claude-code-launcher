@@ -1,6 +1,9 @@
 # config file
 ccl.config.json
 
+# one-time-query results
+results
+
 # release 文件
 releases/v*
 

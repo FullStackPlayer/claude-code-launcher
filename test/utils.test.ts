@@ -1,7 +1,7 @@
 import { expect, test, describe, mock } from 'bun:test';
 import { existsSync, writeFileSync, unlinkSync, mkdirSync, rmdirSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { parseArgs, detectOS, providerToEnvVars } from '../src/utils.js';
+import { parseArgs, providerToEnvVars } from '../src/utils.js';
 import type { ProviderConfig } from '../src/types.js';
 
 describe('Utils Tests', () => {
@@ -12,29 +12,94 @@ describe('Utils Tests', () => {
       // Mock command line arguments
       process.argv = ['node', 'script.js', '--provider=test-provider'];
       const result = parseArgs();
-      expect(result).toBe('test-provider');
+      expect(result).toEqual(['test-provider']);
       
       // Restore original argv
       process.argv = originalArgv;
     });
 
-    test('should return null when no provider argument', () => {
+    test('should return empty array when no provider argument', () => {
       const originalArgv = process.argv;
       
       // Mock command line arguments without provider
       process.argv = ['node', 'script.js', '--other=value'];
       const result = parseArgs();
-      expect(result).toBeNull();
+      expect(result).toEqual([]);
       
       // Restore original argv
       process.argv = originalArgv;
     });
-  });
-
-  describe('detectOS', () => {
-    test('should detect OS type', () => {
-      const osType = detectOS();
-      expect(['windows', 'unix']).toContain(osType);
+    
+    test('should parse both provider and prompt arguments correctly', () => {
+      const originalArgv = process.argv;
+      const originalExit = process.exit;
+      
+      // Mock process.exit
+      let exitCalled = false;
+      process.exit = (() => {
+        exitCalled = true;
+      }) as any;
+      
+      // Mock command line arguments with provider and prompt but no output
+      process.argv = ['node', 'script.js', '--provider=test-provider', '--prompt=test-prompt'];
+      parseArgs();
+      expect(exitCalled).toBe(true); // Should exit because output is missing
+      
+      // Restore original argv and exit
+      process.argv = originalArgv;
+      process.exit = originalExit;
+    });
+    
+    test('should parse provider, prompt, and output arguments correctly', () => {
+      const originalArgv = process.argv;
+      
+      // Mock command line arguments with all three parameters
+      process.argv = ['node', 'script.js', '--provider=test-provider', '--prompt=test-prompt', '--output=test-output.txt'];
+      const result = parseArgs();
+      expect(result).toEqual(['test-provider', 'test-prompt', 'test-output.txt']);
+      
+      // Restore original argv
+      process.argv = originalArgv;
+    });
+    
+    test('should handle prompt without provider and exit', () => {
+      const originalArgv = process.argv;
+      const originalExit = process.exit;
+      
+      // Mock process.exit
+      let exitCalled = false;
+      process.exit = (() => {
+        exitCalled = true;
+      }) as any;
+      
+      // Mock command line arguments with prompt but no provider
+      process.argv = ['node', 'script.js', '--prompt=test-prompt', '--output=test-output.txt'];
+      parseArgs();
+      expect(exitCalled).toBe(true);
+      
+      // Restore original argv and exit
+      process.argv = originalArgv;
+      process.exit = originalExit;
+    });
+    
+    test('should handle output without prompt and exit', () => {
+      const originalArgv = process.argv;
+      const originalExit = process.exit;
+      
+      // Mock process.exit
+      let exitCalled = false;
+      process.exit = (() => {
+        exitCalled = true;
+      }) as any;
+      
+      // Mock command line arguments with output but no prompt
+      process.argv = ['node', 'script.js', '--provider=test-provider', '--output=test-output.txt'];
+      parseArgs();
+      expect(exitCalled).toBe(true);
+      
+      // Restore original argv and exit
+      process.argv = originalArgv;
+      process.exit = originalExit;
     });
   });
 

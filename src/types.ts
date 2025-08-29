@@ -20,6 +20,8 @@ export interface AppConfig {
   default_provider?: string;
   /** provider 配置列表 */
   providers: Record<string, ProviderConfig>;
+  /** 用户自定义的 OTQP（一次性请求提示词），允许为空 */
+  additionalOTQP?: string;
 }
 
 /**
