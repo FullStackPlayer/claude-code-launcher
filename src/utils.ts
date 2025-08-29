@@ -213,8 +213,53 @@ function validateConfig(config: AppConfig): void {
 /**
  * 解析命令行参数
  */
-export function parseArgs(): string[] {
-  const args = process.argv.slice(2);
+export function parseArgs(): Record<string, string> {
+  const args = process.argv.slice(2);  
+  const result: Record<string, string> = {};
+
+  // 检查是否有 --tui-selector 参数
+  const selectorFlag = args.find((arg) => (arg === "--tui-selector"));
+  // 一旦有这个参数立刻返回
+  if (selectorFlag) {
+    result.tuiSelector = "true";
+    return result;
+  }
+
+  // 检查是否有 --version 或 -v 参数
+  if (args.includes("--version") || args.includes("-v")) {
+    try {
+      // 尝试从当前目录或上级目录获取 package.json
+      let packageJsonPath = join(getCurrentDir(), "package.json");
+      if (!existsSync(packageJsonPath)) {
+        packageJsonPath = join(getCurrentDir(), "..", "package.json");
+      }
+      if (!existsSync(packageJsonPath)) {
+        packageJsonPath = join(import.meta.dir, "..", "package.json");
+      }
+      
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+      console.log(packageJson.version || "unknown");
+    } catch (error) {
+      console.log("unknown");
+    }
+    process.exit(0);
+  }
+  
+  // 检查是否有 --help 或 -h 参数
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(`
+用法: ccl [选项]
+
+选项:
+  --provider=<provider>  指定要使用的 provider name，参见配置文件 providers 节点
+  --prompt=<prompt>      指定要发送给 Claude Code 的提示词
+  --output=<file>        指定输出文件名或路径名，单次请求的响应将被保存到该文件中
+  --version, -v          显示版本号
+  --help, -h             显示帮助信息
+    `);
+    process.exit(0);
+  }
+  
   const providerArg = args.find((arg) => arg.startsWith("--provider="));
   const promptArg = args.find((arg) => arg.startsWith("--prompt="));
   const outputArg = args.find((arg) => arg.startsWith("--output="));
@@ -237,13 +282,11 @@ export function parseArgs(): string[] {
     process.exit(1);
   }
   
-  const result: string[] = [];
-  
   // 解析 provider 参数
   if (providerArg) {
     const provider = providerArg.split("=")[1];
     if (provider) {
-      result.push(provider);
+      result.provider = provider;
     }
   }
   
@@ -251,7 +294,7 @@ export function parseArgs(): string[] {
   if (promptArg) {
     const prompt = promptArg.split("=")[1];
     if (prompt) {
-      result.push(prompt);
+      result.prompt = prompt;
     }
   }
   
@@ -259,7 +302,7 @@ export function parseArgs(): string[] {
   if (outputArg) {
     const output = outputArg.split("=")[1];
     if (output) {
-      result.push(output);
+      result.output = output;
     }
   }
   
@@ -318,13 +361,13 @@ export async function launchClaudeCode(envVars: EnvVars, prompt?: string, output
       
       // 如果有 additionalOTQP，则追加到 prePrompt 后面
       if (additionalOTQP && additionalOTQP.trim() !== '') {
-        prePrompt += `\n${additionalOTQP.trim()}`;
+        prePrompt += `${additionalOTQP.trim()}`;
       }
       
-      cmdArgs.push('-p', `${prePrompt}\n我的需求如下: ${prompt.trim()}`);
+      cmdArgs.push('-p', `${prePrompt} ==> 我的问题如下: ${prompt.trim()}`);
     }
     
-    console.log(cmdArgs);
+    // console.log(cmdArgs);
 
     // 根据是否指定了输出文件来决定 stdout 的处理方式
     const stdoutOption = output && output.trim() !== '' ? "pipe" : "inherit";

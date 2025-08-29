@@ -8,6 +8,7 @@ import {
   providerToEnvVars,
   launchClaudeCode,
   isExecutable,
+  getCurrentDir,
 } from "./utils.js";
 import prompts from "prompts";
 
@@ -17,12 +18,14 @@ import prompts from "prompts";
 async function main(): Promise<void> {
   try {
     // console.log('程序参数：', process.argv)
+    const argsResult = parseArgs();
+
     // 检查是否是 TUI 选择器模式
     const args = process.argv.slice(2);
     // 启动 tui 选择器
-    if (args[0] === "--tui-selector") {
+    if (argsResult.tuiSelector === "true") {
       try {
-        // TUI 选择器模式
+        // TUI 选择器模式（--tui-selector 参数后必然有 json 配置）
         const configJson = args[1];
         if (configJson) {
           const config = JSON.parse(configJson);
@@ -67,11 +70,10 @@ async function main(): Promise<void> {
     else {
       Logger.success("配置文件加载成功");
 
-      // 3. 解析命令行参数
-      const argsResult = parseArgs();
-      let selectedProvider = argsResult[0] || '';
-      const prompt = argsResult[1] || '';
-      const output = argsResult[2] || '';
+      // 3. 处理命令行参数
+      let selectedProvider = argsResult.provider || '';
+      const prompt = argsResult.prompt || '';
+      const output = argsResult.output || '';
 
       if (selectedProvider) {
         // 检查指定的 provider 是否存在

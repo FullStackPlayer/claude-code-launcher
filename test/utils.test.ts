@@ -12,19 +12,19 @@ describe('Utils Tests', () => {
       // Mock command line arguments
       process.argv = ['node', 'script.js', '--provider=test-provider'];
       const result = parseArgs();
-      expect(result).toEqual(['test-provider']);
+      expect(result).toEqual({ provider: 'test-provider' });
       
       // Restore original argv
       process.argv = originalArgv;
     });
 
-    test('should return empty array when no provider argument', () => {
+    test('should return empty object when no recognized arguments', () => {
       const originalArgv = process.argv;
       
-      // Mock command line arguments without provider
+      // Mock command line arguments without recognized arguments
       process.argv = ['node', 'script.js', '--other=value'];
       const result = parseArgs();
-      expect(result).toEqual([]);
+      expect(result).toEqual({});
       
       // Restore original argv
       process.argv = originalArgv;
@@ -56,7 +56,11 @@ describe('Utils Tests', () => {
       // Mock command line arguments with all three parameters
       process.argv = ['node', 'script.js', '--provider=test-provider', '--prompt=test-prompt', '--output=test-output.txt'];
       const result = parseArgs();
-      expect(result).toEqual(['test-provider', 'test-prompt', 'test-output.txt']);
+      expect(result).toEqual({ 
+        provider: 'test-provider', 
+        prompt: 'test-prompt', 
+        output: 'test-output.txt' 
+      });
       
       // Restore original argv
       process.argv = originalArgv;
@@ -100,6 +104,66 @@ describe('Utils Tests', () => {
       // Restore original argv and exit
       process.argv = originalArgv;
       process.exit = originalExit;
+    });
+    
+    test('should handle version argument and exit', () => {
+      const originalArgv = process.argv;
+      const originalExit = process.exit;
+      const originalConsoleLog = console.log;
+      const originalProcessCwd = process.cwd;
+      
+      // Mock process.exit and console.log
+      let exitCalled = false;
+      let loggedOutput = '';
+      process.exit = (() => {
+        exitCalled = true;
+      }) as any;
+      console.log = ((message: string) => {
+        loggedOutput = message;
+      }) as any;
+      
+      // Mock process.cwd to return the project root
+      process.cwd = (() => join(import.meta.dir, '..')) as any;
+      
+      // Mock command line arguments with version flag
+      process.argv = ['node', 'script.js', '--version'];
+      parseArgs();
+      expect(exitCalled).toBe(true);
+      // Version should be "unknown" in test environment or match a version pattern
+      expect(loggedOutput === "unknown" || loggedOutput.match(/\d+\.\d+\.\d+/)).toBeTruthy();
+      
+      // Restore original argv, exit, console.log and process.cwd
+      process.argv = originalArgv;
+      process.exit = originalExit;
+      console.log = originalConsoleLog;
+      process.cwd = originalProcessCwd;
+    });
+    
+    test('should handle help argument and exit', () => {
+      const originalArgv = process.argv;
+      const originalExit = process.exit;
+      const originalConsoleLog = console.log;
+      
+      // Mock process.exit and console.log
+      let exitCalled = false;
+      let loggedOutput = '';
+      process.exit = (() => {
+        exitCalled = true;
+      }) as any;
+      console.log = ((message: string) => {
+        loggedOutput = message;
+      }) as any;
+      
+      // Mock command line arguments with help flag
+      process.argv = ['node', 'script.js', '--help'];
+      parseArgs();
+      expect(exitCalled).toBe(true);
+      expect(loggedOutput).toContain('用法: ccl [选项]'); // Should output help text
+      
+      // Restore original argv, exit and console.log
+      process.argv = originalArgv;
+      process.exit = originalExit;
+      console.log = originalConsoleLog;
     });
   });
 

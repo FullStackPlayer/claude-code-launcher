@@ -18,7 +18,7 @@
       "base_url": "https://dashscope.aliyuncs.com/api/v2/apps/claude-code-proxy",
       "auth_token": "YOUR_BAILIAN_API_KEY"
     },
-    ... // 原代码
+    // ... 原代码
   }
 }
 

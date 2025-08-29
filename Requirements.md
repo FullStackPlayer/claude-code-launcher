@@ -6,10 +6,11 @@ Claude Code 是一个非常优秀的 Coding Agent，但是它默认只支持 Ant
 
 ## 智谱 GLM-4.5
 
-接入文档： 
+接入文档：
 https://docs.bigmodel.cn/cn/guide/develop/claude
 
 环境变量设置：
+
 ```shell
 export ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/anthropic
 export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
@@ -22,6 +23,7 @@ export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
 https://api-docs.deepseek.com/zh-cn/guides/anthropic_api
 
 环境变量设置：
+
 ```shell
 export ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic
 export ANTHROPIC_AUTH_TOKEN=DEEPSEEK_API_KEY
@@ -34,6 +36,7 @@ export ANTHROPIC_SMALL_FAST_MODEL=deepseek-chat
 接入文档：https://platform.moonshot.cn/docs/guide/agent-support
 
 环境变量设置：
+
 ```shell
 export ANTHROPIC_BASE_URL=https://api.moonshot.cn/anthropic
 export ANTHROPIC_AUTH_TOKEN=YOUR_MOONSHOT_API_KEY
@@ -46,7 +49,7 @@ export ANTHROPIC_SMALL_FAST_MODEL=kimi-k2-turbo-preview
 **2.注意如果是 windows 系统，设置环境变量使用如下格式：**
 
 ```Powershell
-$env:ANTHROPIC_BASE_URL="https://api.moonshot.cn/anthropic";
+$env:ANTHROPIC_BASE_URL="https://api.moonshot.cn/anthropic"
 $env:ANTHROPIC_AUTH_TOKEN="YOUR_MOONSHOT_API_KEY"
 $env:ANTHROPIC_MODEL="kimi-k2-turbo-preview"
 $env:ANTHROPIC_SMALL_FAST_MODEL="kimi-k2-turbo-preview"
@@ -70,29 +73,34 @@ $env:ANTHROPIC_SMALL_FAST_MODEL="kimi-k2-turbo-preview"
 **发现配置文件不存在或者格式、内容有误时，打印错误提示信息并退出**
 
 配置文件示例如下：
-```json
+
+````json
 {
-    "default_provider": "glm-4.5",
-    "providers": [
-        "glm-4.5": {
-            "base_url": "https://open.bigmodel.cn/api/anthropic",
-            "auth_token": "GLM_API_KEY",
-        },
-        "deepseek-3.1": {
-            "base_url": "https://api.deepseek.com/anthropic",
-            "auth_token": "DEEPSEEK_API_KEY",
-            "model": "deepseek-chat",
-            "small_fast_model": "deepseek-chat"
-        },
-        "kimi-k2": {
-            "base_url": "https://api.moonshot.cn/anthropic",
-            "auth_token": "KIMI_API_KEY",
-            "model": "kimi-k2-turbo-preview",
-            "small_fast_model": "kimi-k2-turbo-preview"
-        }
-    ]
-}
-```
+  "default_provider": "glm-4.5",
+  "additionalOTQP": "请使用中文回复。",
+  "providers": {
+    "glm-4.5": {
+      "base_url": "https://open.bigmodel.cn/api/anthropic",
+      "auth_token": "GLM_API_KEY"
+    },
+    "deepseek-3.1": {
+      "base_url": "https://api.deepseek.com/anthropic",
+      "auth_token": "DEEPSEEK_API_KEY",
+      "model": "deepseek-chat",
+      "small_fast_model": "deepseek-chat"
+    },
+    "kimi-k2": {
+      "base_url": "https://api.moonshot.cn/anthropic",
+      "auth_token": "KIMI_API_KEY",
+      "model": "kimi-k2-turbo-preview",
+      "small_fast_model": "kimi-k2-turbo-preview"
+    },
+    "qwen3-coder": {
+      "base_url": "https://dashscope.aliyuncs.com/api/v2/apps/claude-code-proxy",
+      "auth_token": "YOUR_BAILIAN_API_KEY"
+    }
+  }
+}```
 
 3. 程序启动时，尝试读取启动参数 `--provider=<provider_name>` 指定的 provider 名称
 - 如果该参数存在，则检查配置文件的 providers 属性中是否存在这个 provider
@@ -120,3 +128,4 @@ $env:ANTHROPIC_SMALL_FAST_MODEL="kimi-k2-turbo-preview"
 2. 打印提示信息时要统一格式，并且根据信息类型设置不同颜色
 3. 严格遵循 typescript 的类型系统
 4. 启动 Claude Code 的命令是 `claude`
+````
