@@ -57,7 +57,11 @@ async function main(): Promise<void> {
     const config = loadConfig();
     // 如果配置文件加载失败（null），则停止程序运行
     if (config === null) {
+      Logger.warning("程序将在5秒后自动退出...");
       process.stdin.resume();
+      setTimeout(() => {
+        process.exit(1);
+      }, 5000);
     }
     else {
       Logger.success("配置文件加载成功");
