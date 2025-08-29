@@ -17,7 +17,7 @@ Claude Code 模型启动器 - 让您轻松切换使用不同的 AI 模型作为 
 
 更重要的是，截至目前[2025.08]，除了 Qwen3-Coder 模型，前三家都直接提供了 Anthropic 兼容 api 接口（如果还有更多家这样做的请让我知道），这也就意味着这几家供应商官方下场支持自家模型成为 Claude Code 的后端模型，实测结果也非常优秀，且价格便宜。
 
-[更新] 2025.08.29 ：感谢小伙伴提醒，阿里云百炼官方部署的 qwen3-coder 模型也支持了 Anthropic 的 api 协议（不过据说 qwen3-coder 比较费 token，要小心账单就是了），最新版已经默认自带支持，已经下载了 v0.9.0 版本的兄弟也无需版本升级即可使用，只要在 `ccl.config.json` 文件中增加一个 provider 节点，保存然后重启应用即可：
+[更新] 2025.08.29 ：感谢小伙伴提醒，阿里云百炼官方部署的 qwen3-coder 模型也支持了 Anthropic 的 api 协议（不过据说 qwen3-coder 比较费 token，要小心账单就是了），ccl 最新版已经默认自带支持，之前下载了 v0.9.0 版本的兄弟无需版本升级即可使用，只要在 `ccl.config.json` 文件中增加一个 provider 节点，保存然后重启 ccl 即可：
 
 ```json
 {
@@ -39,7 +39,7 @@ Claude Code 模型启动器 - 让您轻松切换使用不同的 AI 模型作为 
 
 ## 功能特点
 
-- 🚀 支持多个国内优秀的 AI 模型（目前是智谱 GLM 4.5、DeepSeek V3.1、Kimi K2）
+- 🚀 支持多个国内优秀的 AI 模型（目前是智谱 GLM 4.5、DeepSeek V3.1、Kimi K2、Qwen3 Coder）
 - 🖥️ 美观的交互式 TUI 模型选择界面
 - 🎯 命令行参数快速直达
 - ⚙️ 灵活的配置文件管理
@@ -98,6 +98,9 @@ ccl 首次执行会在可执行文件同级目录（ts 脚本模式则是入口 
 确保你的电脑已经安装了 bun 运行时，克隆当前仓库到本地，进入目录后执行：
 
 ```bash
+# 安装依赖包
+bun install
+
 # 交互式选择 provider
 bun run start
 
@@ -113,7 +116,10 @@ bun run start --provider=deepseek-3.1
 
 2. 也可以自己构建可执行文件，克隆仓库到本地后，在项目目录下执行：
 
-```
+```bash
+# 安装依赖
+bun install
+
 # 构建所有平台
 bun run build:all
 
@@ -154,6 +160,7 @@ TBD: 自动化安装脚本
 | glm-4.5      | 智谱 GLM-4.5  | [文档](https://docs.bigmodel.cn/cn/guide/develop/claude)         |
 | deepseek-3.1 | DeepSeek V3.1 | [文档](https://api-docs.deepseek.com/zh-cn/guides/anthropic_api) |
 | kimi-k2      | Kimi K2       | [文档](https://platform.moonshot.cn/docs/guide/agent-support)    |
+| qwen3-coder  | 阿里云百炼    | [文档](https://bailian.console.aliyun.com/?spm=5176.30029779.nav-v2-dropdown-menu-0.d_main_0_0_0.1fed71bfMnRdoo&tab=doc&scm=20140722.M_10863655._.V_1#/doc/?type=model&url=2949529)    |
 
 如有同学发现新的国产模型也官方支持了 Anthropic API，欢迎告诉我。
 
@@ -177,6 +184,8 @@ bun run start
 
 ```
 claude-code-launcher/
+├── releases/
+│   ├── release.sh        # release 发布脚本
 ├── src/
 │   ├── index.ts          # 主程序入口
 │   ├── types.ts          # 类型定义

@@ -16,6 +16,10 @@
       "auth_token": "KIMI_API_KEY",
       "model": "kimi-k2-turbo-preview",
       "small_fast_model": "kimi-k2-turbo-preview"
+    },
+    "qwen3-coder": {
+      "base_url": "https://dashscope.aliyuncs.com/api/v2/apps/claude-code-proxy",
+      "auth_token": "YOUR_BAILIAN_API_KEY"
     }
   }
 }
