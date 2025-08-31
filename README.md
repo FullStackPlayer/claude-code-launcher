@@ -2,6 +2,10 @@
 
 Claude Code 模型启动器 - 让您轻松切换使用不同的 AI 模型作为 Claude Code 的后端。
 
+## 注意
+
+目前通过 `npm install -g ccl-cli-installer` 即可快速将 `ccl` 命令安装到你的系统，方便随处使用。
+
 ## 前言
 
 在 Coding Agent 领域，目前 Claude Code 还是当之无愧的王者，谁能想到一个 cli 工具，竟然把之前的领头羊 Cursor 干得半死不活（还不是蓄意针对的前提下）。
@@ -50,6 +54,7 @@ Claude Code 模型启动器 - 让您轻松切换使用不同的 AI 模型作为 
 - 🔄 跨平台支持（Windows, macOS, Linux）
 - 📦 单文件可执行程序
 - 📚 支持快捷单次请求输出（一行命令让 Claude Code 使用指定模型解答单个问题并输出结果）
+- 🛠️ 设定工作路径（可以更加灵活的充当 agent tool 角色）
 
 ## 安装要求
 
@@ -164,7 +169,7 @@ bun run build:windows:x64
 ./dist/darwin/arm64/ccl --provider=glm-4.5
 ```
 
-为了方便随时使用，你还可以将可执行文件设置为系统全局命令。
+为了方便随时使用，推荐你将 ccl 安装成为当前系统命令，我提供了一个专门的包来实现它，请执行 `npm install -g ccl-cli-installer` 进行安装。
 
 **windows**
 
@@ -177,11 +182,18 @@ windows 用户可以通过两种方式：
 
 ccl 支持以下命令行参数：
 
-- `--provider=xxx`：指定要使用的 provider
-- `--prompt=yyy`：指定要发送给 Claude Code 的提示词
-- `--output=zzz`：指定输出文件名，Claude Code 的响应将被保存到该文件中
-- `--version` 或 `-v`：显示版本号
-- `--help` 或 `-h`：显示帮助信息
+```bash
+# 指令类参数
+--provider=<provider>  指定要使用的 provider name，参见配置文件 providers 节点
+--prompt=<prompt>      指定要发送给 Claude Code 的提示词
+--output=<file>        指定输出文件名或路径名，单次请求的响应将被保存到该文件中
+--pwd=<path>           指定工作目录路径
+
+# 响应类参数
+--config-file, -cf     返回配置文件路径
+--version, -v          显示版本号
+--help, -h             显示帮助信息
+```
 
 当使用 `--output` 参数时，ccl 会自动为文件名添加时间戳后缀，以防止文件同名覆盖。如果输出路径包含目录部分，ccl 会自动检查目录是否存在，不存在则创建目录。
 
@@ -193,16 +205,15 @@ ccl 支持以下命令行参数：
 # 输出到带目录的路径
 ./ccl --provider=glm-4.5 --prompt="写一个Hello World程序" --output=output/hello.js
 
+# 改变工作目录
+./ccl --pwd="../"
+
 # 显示版本号
 ./ccl --version
 
 # 显示帮助信息
 ./ccl --help
 ```
-
-这将分别创建类似 `hello_250829143025.js` 和 `output/hello_250829143025.js` 的文件。
-
-TBD: 自动化安装脚本
 
 ## 支持的模型
 

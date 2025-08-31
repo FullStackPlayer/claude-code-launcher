@@ -1,3 +1,36 @@
+# v0.9.4
+
+## 注意
+
+目前通过 `npm install -g ccl-cli-installer` 即可快速将 `ccl` 命令安装到你的系统，方便随处使用。
+
+## 主要更新内容
+
+1. 新增通过 --pwd=<指定工作路径> 参数改变 Claude Code 运行时工作路径的能力
+2. 新增 --config-file 参数获取当前配置文件路径的能力
+3. 完善了系统 help 信息
+
+## 目前全部命令行参数如下：
+
+**指令类参数**
+--provider=<provider>  指定要使用的 provider name，参见配置文件 providers 节点
+--prompt=<prompt>      指定要发送给 Claude Code 的提示词
+--output=<file>        指定输出文件名或路径名，单次请求的响应将被保存到该文件中
+--pwd=<path>           指定工作目录路径
+
+**响应类参数**
+--config-file, -cf     返回配置文件路径
+--version, -v          显示版本号
+--help, -h             显示帮助信息
+
+## 详细使用说明
+
+参见 [README.md](https://github.com/FullStackPlayer/claude-code-launcher/blob/main/README.md) 文件
+
+# v0.9.3
+
+为了对齐 npm 各个相关包的版本号，跳过 0.9.3 版本
+
 # v0.9.2
 
 ## 主要更新内容

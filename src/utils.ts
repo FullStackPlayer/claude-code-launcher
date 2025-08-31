@@ -1,11 +1,11 @@
 import chalk from "chalk";
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from "fs";
-import { dirname, join } from "path";
+import { dirname, join, resolve } from "path";
 import type { AppConfig, ProviderConfig, EnvVars, OSType } from "./types.js";
 
 // 定义版本号常量，构建时会被替换为实际版本号
 const VERSION = "x.y.z"; // BUILD_VERSION_INJECTION_PLACEHOLDER
-
+const CONFIG_FILE_NAME = "ccl.config.json";
 /**
  * 日志输出工具
  */
@@ -106,13 +106,11 @@ export function loadConfig(): AppConfig | null {
   // 获取可执行文件的真实路径
   let currentDir: string = getCurrentDir();
 
-  // 尝试在可执行文件所在目录查找配置文件
-  //   console.log(currentDir, process.cwd())
-  let configPath = join(currentDir, "ccl.config.json");
+  // 尝试在可执行文件所在目录查找配置文件，如果找不到配置文件，则尝试自动创建
+  let configPath = join(currentDir, CONFIG_FILE_NAME);
 
-  // 如果在可执行文件所在目录找不到配置文件，则尝试在当前工作目录查找
   if (!existsSync(configPath)) {
-    Logger.warning(`配置文件 ccl.config.json 不存在，正在创建默认配置文件...`);
+    Logger.warning(`配置文件 ${CONFIG_FILE_NAME} 不存在，正在创建默认配置文件...`);
 
     // 创建默认配置文件内容
     const defaultConfig = {
@@ -158,7 +156,7 @@ export function loadConfig(): AppConfig | null {
           writeError instanceof Error ? writeError.message : String(writeError)
         }`
       );
-      Logger.error(`请手动创建配置文件 ccl.config.json，内容如下:`);
+      Logger.error(`请手动创建配置文件 ${CONFIG_FILE_NAME}，内容如下:`);
       Logger.error(JSON.stringify(defaultConfig, null, 2));
       return null;
     }
@@ -234,24 +232,50 @@ export function parseArgs(): Record<string, string> {
     console.log(VERSION);
     process.exit(0);
   }
+
+  // 检查是否有 --config-file 或 -cf 参数
+  if (args.includes("--config-file") || args.includes("-cf")) {
+    console.log(resolve(getCurrentDir(), CONFIG_FILE_NAME));
+    process.exit(0);
+  }
+
   // 检查是否有 --help 或 -h 参数
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
-用法: ccl [选项]
+用法: 
+
+  # 1. 使用 ccl-cli-installer 包安装的（推荐！！！）
+  ccl [选项]
+
+  # 2. 直接使用 ccl-cli-${process.platform}-${process.arch} 架构子包安装的
+  ccl-${process.platform}-${process.arch} [选项]
 
 选项:
+
+  # 指令类参数
   --provider=<provider>  指定要使用的 provider name，参见配置文件 providers 节点
   --prompt=<prompt>      指定要发送给 Claude Code 的提示词
   --output=<file>        指定输出文件名或路径名，单次请求的响应将被保存到该文件中
+  --pwd=<path>           指定工作目录路径
+
+  # 响应类参数
+  --config-file, -cf     返回配置文件路径
   --version, -v          显示版本号
   --help, -h             显示帮助信息
-    `);
+
+注意：
+
+  1. pwd 和 output 参数中涉及到路径，无论 windows 还是 unix-like 环境均支持 '.' 和 '..' 还有 '../' 这些 unix 格式的描述符，windows 环境同样支持 '\\' 分隔符，但绝对路径必须以 'C:/' 或者 'D:\\' 开头。
+  2. prompt 和 pwd 以及 output 这种路径相关参数最好用双引号包裹起来，以防止特殊符号带来的异常。
+  3. prompt 和 output 参数必须成对出现，还要同时指定 provider 参数，否则无法完成单次调用任务。
+  `);
     process.exit(0);
   }
 
   const providerArg = args.find((arg) => arg.startsWith("--provider="));
   const promptArg = args.find((arg) => arg.startsWith("--prompt="));
   const outputArg = args.find((arg) => arg.startsWith("--output="));
+  const pwdArg = args.find((arg) => arg.startsWith("--pwd="));
 
   // 如果有 --prompt 或 --output 参数但没有 --provider 参数，则报错并终止程序
   if ((promptArg || outputArg) && !providerArg) {
@@ -294,6 +318,14 @@ export function parseArgs(): Record<string, string> {
     const output = outputArg.split("=")[1];
     if (output) {
       result.output = output;
+    }
+  }
+
+  // 解析 pwd 参数
+  if (pwdArg) {
+    const pwd = pwdArg.split("=")[1];
+    if (pwd) {
+      result.pwd = pwd;
     }
   }
 

@@ -74,6 +74,19 @@ async function main(): Promise<void> {
       let selectedProvider = argsResult.provider || '';
       const prompt = argsResult.prompt || '';
       const output = argsResult.output || '';
+      const pwd = argsResult.pwd || '';
+
+      // 如果指定了 pwd 参数，则更改工作目录
+      if (pwd) {
+        try {
+          Logger.info(`更改工作目录到: ${pwd}`);
+          process.chdir(pwd);
+          Logger.success(`工作目录已更改为: ${process.cwd()}`);
+        } catch (error) {
+          Logger.error(`更改工作目录失败: ${error instanceof Error ? error.message : String(error)}`);
+          process.exit(1);
+        }
+      }
 
       if (selectedProvider) {
         // 检查指定的 provider 是否存在
