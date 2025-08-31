@@ -5,7 +5,9 @@ import type { AppConfig, ProviderConfig, EnvVars, OSType } from "./types.js";
 
 // 定义版本号常量，构建时会被替换为实际版本号
 const VERSION = "x.y.z"; // BUILD_VERSION_INJECTION_PLACEHOLDER
+
 const CONFIG_FILE_NAME = "ccl.config.json";
+
 /**
  * 日志输出工具
  */

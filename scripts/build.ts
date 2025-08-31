@@ -1,5 +1,5 @@
 // scripts/build.ts
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync, rmSync } from 'fs';
 import { execSync } from 'child_process';
 import { join } from 'path';
 
@@ -58,17 +58,81 @@ const buildCommands: Record<string, string> = {
   'build:win32:x64': 'bun build --compile --target=bun-windows-x64 --outfile dist/win32/x64/ccl.exe src/index.ts'
 };
 
+// Release 命令映射（用于发布版本的架构）
+const releaseCommands: Record<string, string> = {
+  'build:darwin:arm64': 'bun build --compile --target=bun-darwin-arm64 --outfile dist/darwin/arm64/ccl src/index.ts',
+  'build:darwin:x64': 'bun build --compile --target=bun-darwin-x64 --outfile dist/darwin/x64/ccl src/index.ts',
+  'build:win32:x64': 'bun build --compile --target=bun-windows-x64 --outfile dist/win32/x64/ccl.exe src/index.ts'
+};
+
 // 获取要执行的构建命令
-const buildTarget = process.argv[2] || 'build:linux:x64';
+const buildTarget = process.argv[2] || 'build:all';
 
 try {
-  if (buildCommands[buildTarget]) {
+  // 如果是 build:all、build:release 或者特定平台构建，清空 dist 目录（如果存在）
+  if (buildTarget === 'build:all' || buildTarget === 'build:release' || buildCommands[buildTarget]) {
+    if (existsSync('dist')) {
+      console.log('Cleaning dist directory...');
+      rmSync('dist', { recursive: true, force: true });
+    }
+  }
+  
+  // 创建 dist 目录
+  mkdirSync('dist', { recursive: true });
+  
+  // 如果是 build:all，则构建所有平台
+  if (buildTarget === 'build:all') {
+    console.log(`Building all targets with version ${version}`);
+    let success = true;
+    
+    for (const [target, command] of Object.entries(buildCommands)) {
+      try {
+        console.log(`\nBuilding for ${target}...`);
+        execSync(command, { stdio: 'inherit' });
+        console.log(`Successfully built ${target}`);
+      } catch (error) {
+        console.error(`Failed to build ${target}:`, error);
+        success = false;
+      }
+    }
+    
+    if (success) {
+      console.log('\nAll builds completed successfully');
+    } else {
+      console.error('\nSome builds failed');
+      process.exit(1);
+    }
+  } else if (buildTarget === 'build:release') {
+    // 如果是 build:release，则只构建 releaseCommands 中的平台
+    console.log(`Building release targets with version ${version}`);
+    let success = true;
+    
+    for (const [target, command] of Object.entries(releaseCommands)) {
+      try {
+        console.log(`\nBuilding for ${target}...`);
+        execSync(command, { stdio: 'inherit' });
+        console.log(`Successfully built ${target}`);
+      } catch (error) {
+        console.error(`Failed to build ${target}:`, error);
+        success = false;
+      }
+    }
+    
+    if (success) {
+      console.log('\nRelease builds completed successfully');
+    } else {
+      console.error('\nSome release builds failed');
+      process.exit(1);
+    }
+  } else if (buildCommands[buildTarget]) {
     console.log(`Building for ${buildTarget} with version ${version}`);
     execSync(buildCommands[buildTarget], { stdio: 'inherit' });
     console.log('Build completed successfully');
   } else {
     console.error(`Unknown build target: ${buildTarget}`);
     console.log('Available targets:');
+    console.log('  build:all');
+    console.log('  build:release');
     Object.keys(buildCommands).forEach(target => console.log(`  ${target}`));
     process.exit(1);
   }
