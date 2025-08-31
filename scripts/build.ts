@@ -55,7 +55,7 @@ const buildCommands: Record<string, string> = {
   'build:linux:x64': 'bun build --compile --target=bun-linux-x64 --outfile dist/linux/x64/ccl src/index.ts',
   'build:darwin:arm64': 'bun build --compile --target=bun-darwin-arm64 --outfile dist/darwin/arm64/ccl src/index.ts',
   'build:darwin:x64': 'bun build --compile --target=bun-darwin-x64 --outfile dist/darwin/x64/ccl src/index.ts',
-  'build:windows:x64': 'bun build --compile --target=bun-windows-x64 --outfile dist/windows/x64/ccl.exe src/index.ts'
+  'build:win32:x64': 'bun build --compile --target=bun-windows-x64 --outfile dist/win32/x64/ccl.exe src/index.ts'
 };
 
 // 获取要执行的构建命令

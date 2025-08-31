@@ -33,10 +33,10 @@ echo "压缩并转存构建产物..."
 FILES=()
 
 # 压缩并转存各个平台的构建产物
-if [ -f "$PROJECT_ROOT/dist/windows/x64/ccl.exe" ]; then
-  WINDOWS_ZIP="$RELEASE_DIR/ccl-windows-x64.zip"
+if [ -f "$PROJECT_ROOT/dist/win32/x64/ccl.exe" ]; then
+  WINDOWS_ZIP="$RELEASE_DIR/ccl-win32-x64.zip"
   echo "压缩 Windows 版本到 $WINDOWS_ZIP"
-  zip -j "$WINDOWS_ZIP" "$PROJECT_ROOT/dist/windows/x64/ccl.exe"
+  zip -j "$WINDOWS_ZIP" "$PROJECT_ROOT/dist/win32/x64/ccl.exe"
   FILES+=("$WINDOWS_ZIP")
 fi
 

@@ -154,7 +154,7 @@ bun run build:all
 bun run build:linux:x64
 bun run build:darwin:arm64
 bun run build:darwin:x64
-bun run build:windows:x64
+bun run build:win32:x64
 ```
 
 #### 运行
