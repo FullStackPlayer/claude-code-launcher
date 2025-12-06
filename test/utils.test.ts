@@ -304,7 +304,7 @@ describe('Utils Tests', () => {
           expect(config.providers).toBeDefined();
           expect(Object.keys(config.providers).length).toBeGreaterThan(0);
           // Check for the default provider that we know exists in the actual config
-          expect(config.providers['glm-4.5']).toBeDefined();
+          expect(config.providers['GLM-4.6']).toBeDefined();
         }
       } finally {
         // Restore original functions

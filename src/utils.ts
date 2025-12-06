@@ -112,34 +112,57 @@ export function loadConfig(): AppConfig | null {
   let configPath = join(currentDir, CONFIG_FILE_NAME);
 
   if (!existsSync(configPath)) {
-    Logger.warning(`配置文件 ${CONFIG_FILE_NAME} 不存在，正在创建默认配置文件...`);
+    Logger.warning(
+      `配置文件 ${CONFIG_FILE_NAME} 不存在，正在创建默认配置文件...`
+    );
 
     // 创建默认配置文件内容
     const defaultConfig = {
       providers: {
-        "glm-4.5": {
+        "GLM-4.6": {
+          description:
+            "智谱最新模型，支持工具调用和复杂任务，通过自有MCP整合实现视觉理解、联网搜索、网页读取能力",
           base_url: "https://open.bigmodel.cn/api/anthropic",
           auth_token: "GLM_API_KEY",
+          api_timeout_ms: "3000000",
+          claude_code_disable_nonessential_traffic: "1",
         },
-        "deepseek-3.1": {
-          base_url: "https://api.deepseek.com/anthropic",
-          auth_token: "DEEPSEEK_API_KEY",
-          model: "deepseek-chat",
-          small_fast_model: "deepseek-chat",
+        "MiniMax-M2": {
+          description:
+            "MiniMax最新模型，擅长多步工具调用和端到端任务规划，同样通过自有MCP整合实现视觉理解、联网搜索能力",
+          base_url: "https://api.minimaxi.com/anthropic",
+          auth_token: "MINIMAX_API_KEY",
+          api_timeout_ms: "3000000",
+          claude_code_disable_nonessential_traffic: "1",
+          model: "MiniMax-M2",
+          small_fast_model: "MiniMax-M2",
+          default_opus_model: "MiniMax-M2",
+          default_sonnet_model: "MiniMax-M2",
+          default_haiku_model: "MiniMax-M2",
         },
-        "kimi-k2": {
+        "Kimi-K2": {
+          description: "Kimi最新模型，支持多步工具调用与思考",
           base_url: "https://api.moonshot.cn/anthropic",
           auth_token: "KIMI_API_KEY",
-          model: "kimi-k2-turbo-preview",
-          small_fast_model: "kimi-k2-turbo-preview",
+          model: "kimi-k2-thinking-turbo",
+          default_opus_model: "kimi-k2-thinking-turbo",
+          default_sonnet_model: "kimi-k2-thinking-turbo",
+          default_haiku_model: "kimi-k2-thinking-turbo",
+          claude_code_subagent_model: "kimi-k2-thinking-turbo",
         },
-        "qwen3-coder": {
-          base_url:
-            "https://dashscope.aliyuncs.com/api/v2/apps/claude-code-proxy",
-          auth_token: "YOUR_BAILIAN_API_KEY",
+        "DeepSeek-3.2": {
+          description:
+            "深度求索的最新模型，擅长思考模式、工具调用和复杂任务（支持Claude Code 中通过 Tab 键打开思考模式）",
+          base_url: "https://api.deepseek.com/anthropic",
+          auth_token: "DEEPSEEK_API_KEY",
+          api_timeout_ms: "600000",
+          model: "deepseek-chat",
+          small_fast_model: "deepseek-chat",
+          claude_code_disable_nonessential_traffic: "1",
         },
       },
-      additionalOTQP: ``,
+      default_provider: "GLM-4.6",
+      additionalOTQP: `请使用中文回答。`,
     };
 
     try {
@@ -215,7 +238,7 @@ function validateConfig(config: AppConfig): void {
 }
 
 /**
- * 解析命令行参数
+ * 解析命令行参数，返回一个结果对象
  */
 export function parseArgs(): Record<string, string> {
   const args = process.argv.slice(2);
@@ -223,7 +246,7 @@ export function parseArgs(): Record<string, string> {
 
   // 检查是否有 --tui-selector 参数
   const selectorFlag = args.find((arg) => arg === "--tui-selector");
-  // 一旦有这个参数立刻返回
+  // 一旦有这个参数立刻返回（因为这个参数是程序自己添加上的，此时程序以子进程形式运行）
   if (selectorFlag) {
     result.tuiSelector = "true";
     return result;
@@ -258,7 +281,7 @@ export function parseArgs(): Record<string, string> {
   --provider=<provider>  指定要使用的 provider name，参见配置文件 providers 节点
   --prompt=<prompt>      指定要发送给 Claude Code 的提示词
   --output=<file>        指定输出文件名或路径名，单次请求的响应将被保存到该文件中
-  --pwd=<path>           指定工作目录路径
+  --pwd=<path>           指定运行在特定工作目录路径
 
   # 响应类参数
   --config-file, -cf     返回配置文件路径
@@ -267,7 +290,7 @@ export function parseArgs(): Record<string, string> {
 
 注意：
 
-  1. pwd 和 output 参数中涉及到路径，无论 windows 还是 unix-like 环境均支持 '.' 和 '..' 还有 '../' 这些 unix 格式的描述符，windows 环境同样支持 '\\' 分隔符，但绝对路径必须以 'C:/' 或者 'D:\\' 开头。
+  1. pwd 和 output 参数中涉及到路径，无论 windows 还是 unix-like 环境均支持 '.' 和 '..' 还有 '../' 这些 unix 格式的描述符，windows 环境同样支持 '\\' 分隔符，但绝对路径必须以 'C:/' 或者 'C:\\' 这样的格式开头。
   2. prompt 和 pwd 以及 output 这种路径相关参数最好用双引号包裹起来，以防止特殊符号带来的异常。
   3. prompt 和 output 参数必须成对出现，还要同时指定 provider 参数，否则无法完成单次调用任务。
   `);
@@ -351,6 +374,17 @@ export function providerToEnvVars(provider: ProviderConfig): EnvVars {
       continue;
     }
 
+    // 跳过对 claude code 运行无用的属性
+    if (key === "description") {
+      continue;
+    }
+
+    // claude_code 命名空间下的属性不需要加 Anthropic 前缀
+    if (key.startsWith("claude_code_") || key.startsWith("api_")) {
+      envVars[key.toUpperCase()] = value;
+      continue;
+    }
+
     // 将属性名转换为大写并添加 ANTHROPIC_ 前缀
     const envKey = `ANTHROPIC_${key.toUpperCase()}`;
 
@@ -387,9 +421,9 @@ export async function launchClaudeCode(
 
     // 如果有 prompt 参数，则添加 -p 参数
     if (prompt && prompt.trim() !== "") {
-      let prePrompt = `注意！此次会话中，你必须将所有内容都直接返回，代码使用代码的代码块包裹，永远不要将任何内容写入任何文件！如果你生成的内容中用到了代码 层级标题，请从第二级开始！`;
+      let prePrompt = `注意！此次会话中，你必须将生成的所有内容都直接返回，代码内容请使用代码块包裹，永远不要对本地文件系统进行任何更改！如果你生成的内容中用到了markdown层级标题，请从第二级开始！`;
 
-      // 如果有 additionalOTQP，则追加到 prePrompt 后面
+      // 如果有 additionalOTQP 配置选项，则追加到 prePrompt 后面
       if (additionalOTQP && additionalOTQP.trim() !== "") {
         prePrompt += `${additionalOTQP.trim()}`;
       }
@@ -402,6 +436,8 @@ export async function launchClaudeCode(
     // 根据是否指定了输出文件来决定 stdout 的处理方式
     const stdoutOption = output && output.trim() !== "" ? "pipe" : "inherit";
 
+    // 计算执行时长
+    const startTime = performance.now();
     const proc = Bun.spawn(cmdArgs, {
       env,
       stdin: "inherit",
@@ -409,11 +445,11 @@ export async function launchClaudeCode(
       stderr: stdoutOption,
     });
 
-    Logger.success("Claude Code 启动成功");
+    Logger.success(`Claude Code 启动成功！${(prompt && prompt.trim() !== "") ? ('正在后台回答问题：' + prompt.trim()) : ''}\n`);
 
     // 如果指定了输出文件，则将 stdout 写入文件
     if (output && output.trim() !== "") {
-      // 解析输出路径
+      // 解析输出路径∂
       const outputPath = output.trim();
 
       // 生成时间戳 (YYMMDDhhmmss格式)
@@ -539,9 +575,14 @@ export async function launchClaudeCode(
     }
 
     // 处理信号
+    let isShuttingDown = false;
     const handleSignal = (signal: string) => {
-      Logger.info(`\n正在关闭 Claude Code... (信号: ${signal})`);
-      proc.kill();
+      if (!isShuttingDown) {
+        console.log("");
+        Logger.info(`正在关闭 Claude Code... (信号: ${signal})`);
+        proc.kill();
+      }
+      isShuttingDown = true;
     };
 
     process.on("SIGINT", () => handleSignal("SIGINT"));
@@ -550,11 +591,11 @@ export async function launchClaudeCode(
     // 等待进程结束
     const exitCode = await proc.exited;
 
+    console.log("");
     if (exitCode === 0) {
-      console.log("");
-      Logger.success("Claude Code 正常退出\n");
+      Logger.success("Claude Code 正常退出");
+      if (prompt && prompt.trim() !== "") Logger.info(`任务执行时长: ${Math.round((performance.now() - startTime) / 1000)}秒\n`);
     } else {
-      console.log("");
       Logger.error(`Claude Code 退出，退出码: ${exitCode}\n`);
       process.exit(exitCode);
     }

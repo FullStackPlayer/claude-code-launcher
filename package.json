@@ -1,6 +1,6 @@
 {
   "name": "claude-code-launcher",
-  "version": "0.9.4",
+  "version": "0.9.7",
   "description": "Claude Code launcher with multiple model provider support",
   "main": "src/index.ts",
   "module": "src/index.ts",

@@ -1,3 +1,26 @@
+# v0.9.7
+
+最近国产大模型在编程能力方面取得较大进步，且大都针对 Claude Code 进行了专门适配，甚至还推出了专门的开发者编码套餐，是时候更新一下了。
+
+## 注意
+
+推荐通过 `npm install -g ccl-cli-installer` 快速将 `ccl` 作为系统命令安装到你的系统，方便随处使用。
+
+## 主要更新
+
+- 增加了 MiniMax M2 模型
+- GLM 升级到最新的 4.6
+- DeepSeek 升级到最新的 3.2
+- Kimi K2 升级到最新的 kimi-k2-thinking-turbo 模型
+- 移除了 qwen3-coder（反正 qwen 也不在乎对 Claude Code 是否适配）
+- 根据各家官方文档丰富了各自环境变量的配置项
+- 增加了 linux-x64 架构的支持（主要测试了 Ubuntu 系统），至此，理论上我们也算支持了全平台
+- 对于一次性请求增加了耗时统计
+- 经测试对 Claude Code 2.0 的支持没有发现问题
+- 优化了显示方面的细节
+
+过去几个月一直在游历祖国大好河山，更新晚了，请见谅。
+
 # v0.9.4
 
 ## 注意
@@ -13,15 +36,15 @@
 ## 目前全部命令行参数如下：
 
 **指令类参数**
---provider=<provider>  指定要使用的 provider name，参见配置文件 providers 节点
---prompt=<prompt>      指定要发送给 Claude Code 的提示词
---output=<file>        指定输出文件名或路径名，单次请求的响应将被保存到该文件中
---pwd=<path>           指定工作目录路径
+- --provider=<provider>  指定要使用的 provider name，参见配置文件 providers 节点
+- --prompt=<prompt>      指定要发送给 Claude Code 的提示词
+- --output=<file>        指定输出文件名或路径名，单次请求的响应将被保存到该文件中
+- --pwd=<path>           指定工作目录路径
 
 **响应类参数**
---config-file, -cf     返回配置文件路径
---version, -v          显示版本号
---help, -h             显示帮助信息
+- --config-file, -cf     返回配置文件路径
+- --version, -v          显示版本号
+- --help, -h             显示帮助信息
 
 ## 详细使用说明
 

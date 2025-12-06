@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# 注意：
+# 1、这个发布脚本会直接将二进制文件上传至 github releases，请谨慎使用
+# 2、请确保你已经安装了 gh 命令行工具，并且已经登录 Github 账号
+# 3、发布时会读取 ./Documents/Releases.md 文件，取出当前版本号对应标题下的内容作为 RELEASE_NOTES 的内容
+
 # 获取脚本所在目录和项目根目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -54,16 +59,23 @@ if [ -f "$PROJECT_ROOT/dist/darwin/x64/ccl" ]; then
   FILES+=("$DARWIN_X64_ZIP")
 fi
 
+if [ -f "$PROJECT_ROOT/dist/linux/x64/ccl" ]; then
+  LINUX_X64_ZIP="$RELEASE_DIR/ccl-linux-x64.zip"
+  echo "压缩 linux x64 版本到 $LINUX_X64_ZIP"
+  zip -j "$LINUX_X64_ZIP" "$PROJECT_ROOT/dist/linux/x64/ccl"
+  FILES+=("$LINUX_X64_ZIP")
+fi
+
 # 检查是否有文件被压缩
 if [ ${#FILES[@]} -eq 0 ]; then
   echo "没有找到任何构建产物，退出脚本"
   exit 1
 fi
 
-# 读取根目录下 Releases.md 文件，取出 $VERSION 对应名称的一级标题下的内容作为 RELEASE_NOTES 的内容
+# 读取 Documents/Releases.md 文件，取出 $VERSION 对应名称的一级标题下的内容作为 RELEASE_NOTES 的内容
 echo "读取发布说明..."
 RELEASE_NOTES=""
-if [ -f "$PROJECT_ROOT/Releases.md" ]; then
+if [ -f "$PROJECT_ROOT/Documents/Releases.md" ]; then
   # 使用 awk 提取指定版本的发布说明
   RELEASE_NOTES=$(awk -v ver="$VERSION" '
     /^# v[0-9]/{ 
@@ -87,7 +99,7 @@ if [ -f "$PROJECT_ROOT/Releases.md" ]; then
         print notes
       }
     }
-  ' "$PROJECT_ROOT/Releases.md")
+  ' "$PROJECT_ROOT/Documents/Releases.md")
   
   # 如果没有找到对应版本的说明，使用默认说明
   if [ -z "$RELEASE_NOTES" ]; then
@@ -99,6 +111,8 @@ fi
 
 # 转义特殊字符
 RELEASE_NOTES_ESCAPED=$(printf '%s\n' "$RELEASE_NOTES" | sed 's/`/\\`/g')
+
+echo "发布说明: $RELEASE_NOTES_ESCAPED"
 
 # 调试信息
 echo "SCRIPT_DIR: $SCRIPT_DIR"

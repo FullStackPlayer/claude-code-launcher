@@ -20,7 +20,7 @@ async function main(): Promise<void> {
     // console.log('程序参数：', process.argv)
     const argsResult = parseArgs();
 
-    // 检查是否是 TUI 选择器模式
+    // 0. 检查是否是 TUI 选择器模式（此时程序是以子进程方式来运行的）
     const args = process.argv.slice(2);
     // 启动 tui 选择器
     if (argsResult.tuiSelector === "true") {
@@ -28,9 +28,16 @@ async function main(): Promise<void> {
         // TUI 选择器模式（--tui-selector 参数后必然有 json 配置）
         const configJson = args[1];
         if (configJson) {
+          // 解析 json 内容
           const config = JSON.parse(configJson);
+          // 此时程序已经在独立子进程中，所以直接运行 TUI 界面获取选中的模型即可
           const selectedProvider = await runTUISelector(config);
           if (selectedProvider) {
+            // 检测退出选项
+            if (selectedProvider === "EXIT") {
+              // 返回代码2给主进程，让主进程也退出
+              process.exit(2);
+            }
             process.stdout.write(selectedProvider);
             process.exit(0);
           } else {
@@ -64,7 +71,7 @@ async function main(): Promise<void> {
       Logger.warning("程序将在5秒后自动退出...");
       process.stdin.resume();
       setTimeout(() => {
-        process.exit(1);
+        process.exit(0);
       }, 5000);
     }
     else {
@@ -123,6 +130,7 @@ async function main(): Promise<void> {
   }
 }
 
+// 直接运行 TUI 选择器界面（此时代码运行在一个独立子进程中）
 async function runTUISelector(config: any): Promise<string | null> {
   try {
     // 保存原始的 stdout
@@ -147,10 +155,17 @@ async function runTUISelector(config: any): Promise<string | null> {
 
     const choices = providerNames.map((name: string, index: number) => ({
       title: name,
-      description: `${config.providers[name].base_url}`,
+      description: `${config.providers[name].description}`,
       value: name,
     }));
 
+    // 增加一个退出选项
+    choices.push({
+      title: "退出",
+      description: "放弃执行 Claude Code",
+      value: "EXIT",
+    });
+    
     const response = await prompts(
       {
         type: "select",
@@ -158,11 +173,11 @@ async function runTUISelector(config: any): Promise<string | null> {
         message: "选择 provider:",
         choices,
         initial: defaultIndex,
-        stdout: process.stderr, // 将 prompts 输出重定向到 stderr
+        stdout: process.stderr, // 将 prompts 输出重定向到 stderr（因为 prompts 输出的是一个 TUI 界面，如果它输出到 stdout，用户就无法看见了）
       },
       {
         onCancel: () => {
-          // 用户取消了选择
+          // 用户按 Ctrl+c 取消了选择
           process.exit(1);
         },
       }
@@ -183,6 +198,7 @@ async function runTUISelector(config: any): Promise<string | null> {
   return null;
 }
 
+// 以交互界面形式选择 provider，返回选择的 provider 名称
 async function selectProviderInteractively(config: any): Promise<string> {
   const providerNames = Object.keys(config.providers);
 
@@ -202,20 +218,23 @@ async function selectProviderInteractively(config: any): Promise<string> {
 
   Logger.info("请选择要使用的 provider:");
 
-  // 使用子进程运行自己的可执行文件，但以 TUI 模式运行
+  // 方案1：使用子进程方式自己运行自己（可执行文件），但以 TUI 模式运行
   try {
     // 获取当前可执行文件的路径
     const currentExecutable = process.execPath;
     const args = [currentExecutable];
-    // 如果是脚本执行方式，要添加脚本路径作为第2个参数
+    // 如果是脚本执行方式，要添加脚本路径作为第2个参数（兼容开发调试模式）
     if (!isExecutable()) {
       args.push(import.meta.path);
     }
+    // 添加参数指明要以 TUI 形式让用户选择 provider
     args.push("--tui-selector");
+    // 添加配置文件内容作为第3个参数（兼容 TUI 选择器模式）
     args.push(JSON.stringify(config));
 
     // console.log('当前可执行文件：', currentExecutable)
 
+    // 启动子进程
     const proc = Bun.spawn(
       args,
       {
@@ -225,17 +244,23 @@ async function selectProviderInteractively(config: any): Promise<string> {
       }
     );
 
+    // 等待子进程输出并退出
     const output = await new Response(proc.stdout).text();
     const exitCode = await proc.exited;
 
+    // 如果子进程成功退出且有输出，则使用输出作为选择的 provider
     if (exitCode === 0 && output.trim() && config.providers[output.trim()]) {
       const selectedProvider = output.trim();
       // Logger.success(`使用 TUI 选择了 provider: ${selectedProvider}`);
       return selectedProvider;
     } else if (exitCode === 1) {
-      // 用户取消了选择，退出整个应用程序
+      // 用户主动退出整个应用程序
       Logger.info("用户退出应用程序");
       process.exit(1);
+    } else if (exitCode === 2) {
+      // 用户选择了“退出”选项，优雅退出整个应用程序
+      Logger.info("用户选择退出应用程序");
+      process.exit(0);
     } else {
       Logger.warning("TUI 隔离进程失败");
     }
