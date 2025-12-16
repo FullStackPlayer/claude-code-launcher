@@ -290,7 +290,7 @@ export function parseArgs(): Record<string, string> {
 
 注意：
 
-  1. pwd 和 output 参数中涉及到路径，无论 windows 还是 unix-like 环境均支持 '.' 和 '..' 还有 '../' 这些 unix 格式的描述符，windows 环境同样支持 '\\' 分隔符，但绝对路径必须以 'C:/' 或者 'C:\\' 这样的格式开头。
+  1. pwd 和 output 参数中涉及到路径，无论 windows 还是 unix-like 环境均支持 '.' 和 '..' 还有 '../' 这些 unix 格式的描述符，windows 环境同样支持 '\\\\' 分隔符，但绝对路径必须以 'C:/' 或者 'C:\\\\' 这样的格式开头。
   2. prompt 和 pwd 以及 output 这种路径相关参数最好用双引号包裹起来，以防止特殊符号带来的异常。
   3. prompt 和 output 参数必须成对出现，还要同时指定 provider 参数，否则无法完成单次调用任务。
   `);
